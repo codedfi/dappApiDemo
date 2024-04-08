@@ -195,10 +195,16 @@ const fnTestBridget = async () => {
     if(quoteResult.code !== 0) return
     const { outAmount, serviceFee, gasFee } = quoteResult.data
 
-    // Calculate the value the user should receive.
-    const receiveAmountForExtra = (BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee)).toString()
     // Third-party transaction fee.
     const thirdAmountForExtra = '2_30'; // The third-party fee ranges from 0.1% to 0.5%, expressed in basis points.
+    
+    const thirdRateNum = parseUnits('30', ETHTokenForEth.decimals)
+    const thirdRateDen = parseUnits('10000', ETHTokenForEth.decimals)
+    const thirdFee = formatUnits(BigInt(amount) * thirdRateNum / thirdRateDen, ETHTokenForEth.decimals)
+    const thirdFeeBI = parseUnits(thirdFee, ETHTokenForBnb.decimals)
+
+    // Calculate the value the user should receive.
+    const receiveAmountForExtra = (BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee) - thirdFeeBI).toString()
 
     const extra = `1_${receiveAmountForExtra};${thirdAmountForExtra}`
 
@@ -283,11 +289,17 @@ const fnTestAggregate = async () => {
     if(quoteResult.code !== 0) return
     const { chain, chainDecimal, outAmount, serviceFee, gasFee } = quoteResult.data
 
-    // Calculate the value the user should receive.
-    const toAmount = formatUnits(BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee), chainDecimal)
-    const receiveAmountForExtra = (parseUnits(toAmount), BNBTokenForBnb.decimals).toString()
     // Third-party transaction fee.
     const thirdAmountForExtra = '2_30'; // The third-party fee ranges from 0.1% to 0.5%, expressed in basis points.
+
+    const thirdRateNum = parseUnits('30', ETHTokenForEth.decimals)
+    const thirdRateDen = parseUnits('10000', ETHTokenForEth.decimals)
+    const thirdFee = formatUnits(BigInt(amount) * thirdRateNum / thirdRateDen, ETHTokenForEth.decimals)
+    const thirdFeeBI = parseUnits(thirdFee, chainDecimal)
+
+    // Calculate the value the user should receive.
+    const toAmount = formatUnits(BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee) - thirdFeeBI, chainDecimal)
+    const receiveAmountForExtra = (parseUnits(toAmount), BNBTokenForBnb.decimals).toString()
 
     const extra = `1_${receiveAmountForExtra};${thirdAmountForExtra}`
 
