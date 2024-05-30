@@ -229,6 +229,7 @@ const getAggregateQuote = async (params) => {
 const fnTestBridget = async () => {
     // This information can be obtained through the getChain and getChains APIs.
     const v2ContractForETH = '0x4c5f53015f3adb1b1d15ddf4e17edaae6fa185a5'
+
     // This information can be obtained through the getChain and getAssets APIs.
     const ETHTokenForEth = {
         index: '4',
@@ -252,7 +253,7 @@ const fnTestBridget = async () => {
         symbol: 'ETH',
         fromChain: 'ETH',
         toChain: 'BNB',
-        extra: `3_2;${thirdAmountForExtra}`,
+        channelFeeRate: `30`, // thirdAmountForExtra
     }
     // quote 
     const quoteResult = await getBridgeQuote(params)
@@ -299,6 +300,7 @@ const fnTestBridget = async () => {
     }
     const isApproved = await tokenApprove(ETHTokenForEth, v2ContractForETH)
     if(!isApproved) return false
+
     const signer = await getSigner()
     const writeContract = new ethers.Contract(v2ContractForETH, abi, signer)
     const options = {value: value}
@@ -338,7 +340,7 @@ const fnTestAggregate = async () => {
         toTokenAddress: BNBTokenForBnb.address,
         toDecimal: BNBTokenForBnb.decimals,
         toChain: 'BNB',
-        extra: `3_2;${thirdAmountForExtra}`,
+        channelFeeRate: '30',
     }
     // quote 
     const quoteResult = await getAggregateQuote(params)
@@ -436,7 +438,7 @@ const fnTestSwap = async () => {
         toTokenAddress: USDCTokenForBnb.address,
         toDecimal: USDCTokenForBnb.decimals,
         toChain: 'BNB',
-        extra: `3_2;${thirdAmountForExtra}`,
+        channelFeeRate: '30',
     }
     // quote 
     const quoteResult = await getAggregateQuote(params)
@@ -565,3 +567,5 @@ const fnTestSwap = async () => {
     }
     
 }
+
+fnTestBridget()
