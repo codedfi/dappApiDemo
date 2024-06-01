@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js';
 import { MaxUint256, ethers, formatUnits, hexlify, parseUnits, toUtf8Bytes } from 'ethers'
 const abi = [
     {
@@ -353,8 +354,8 @@ const fnTestAggregate = async () => {
     const toAmount = formatUnits(BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee), chainDecimal)
     const receiveAmountForExtra = formatUnits(parseUnits(toAmount), BNBTokenForBnb.decimals).toString()
 
-    // Computed minimum
-    const miniAmount = formatUnits(parseUnits(toAmount, 30) * parseUnits((1 - 100/10000) , 30), 30)
+    // Computed minimum, After calculating the minimum value, we need to convert it to the decimals of the target chain.
+    const miniAmount = BigNumber(toAmount).multipliedBy(BigNumber((1 - 100/10000))).toString()
     const miniAmountForExtra = parseUnits(miniAmount, BNBTokenForBnb.decimals).toString()
 
     // 1_Expected value;2_Third party profit ratio;3_version;4_Mini Amount;5_Execution chain
@@ -452,7 +453,7 @@ const fnTestSwap = async () => {
     const receiveAmountForExtra = formatUnits(parseUnits(toAmount), USDCTokenForBnb.decimals).toString()
 
     // Computed minimum
-    const miniAmount = formatUnits(parseUnits(toAmount, 30) * parseUnits((1 - 100/10000) , 30), 30)
+    const miniAmount = BigNumber(toAmount).multipliedBy(BigNumber((1 - 100/10000))).toString()
     const miniAmountForExtra = parseUnits(miniAmount, USDCTokenForBnb.decimals).toString()
 
     // 1_Expected value;2_Third party profit ratio;3_version;4_Mini Amount;5_Execution chain
