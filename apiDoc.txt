@@ -1,0 +1,345 @@
+1. https://api2.chainge.finance/v1/getChain
+To list all supported chains
+in: none
+out:
+fullName //fullname of the chain
+nickName //nickname of the chain,commonly used when passing parameters
+baseCoin //symbol of basecoin of the chain, e.g. ETH for arbitrum, BTC for bitcoin
+decimals //symbol of basecoin
+family // 1 means evm chain
+noSwap //set true to disable bridge and swap function of the chain
+disabled //set true to disable the chain
+delisted //set true to delist the chain
+builtInMinterProxyV2 // MinterProxyV2 contract address of the chain
+builtInSwapProxy //SwapProxy contract address of the chain
+weth //wrapped basecoin contract address of the chain
+
+
+2. https://api2.chainge.finance/v1/getAssets
+To list all supported assets
+in: none
+out:
+index //assets index
+name //assets name
+chainbase //token is the basecoin of these chains
+delisted //true means token delisted
+contracts {
+    nickname: {
+        address //contract address
+        decimals //decimals of the token
+        burnable //true means tokens is wrapped by Chainge
+        delisted //true means current token of this chain is delisted
+		disableBridge //true means current token of this chain cannot bridge
+    }
+}
+
+
+3. https://api2.chainge.finance/v1/getAssetsByChain?chain=ARB
+To list all supported assets on the given chain
+in: nickname of chain
+out:
+index //assets index
+name //assets name
+delisted //true means token delisted
+contractAddress //contract address
+decimals //decimals of the token
+burnable //true means tokens is wrapped by Chainge
+delisted //true means current token of this chain is delisted
+disableBridge //true means current token of this chain cannot bridge
+
+4. https://api2.chainge.finance/v1/getChainGasUsd
+List gas need on each chain, described in USD value. 
+in: none
+out: 
+index //assets index
+name //assets name
+delisted //true means token delisted
+contractAddress //contract address
+decimals //decimals of the token
+burnable //true means tokens is wrapped by Chainge
+delisted //true means current token of this chain is delisted
+
+
+5. https://api2.chainge.finance/v1/getBridgeQuote
+in:
+Symbol
+Amount
+FromChain
+ToChain
+ChannelFeeRate //denominator is 10,000
+
+out:
+Price
+OutAmount
+OutAmountUsd
+ServiceFee
+GasFee
+ServiceFeeRate
+
+example:
+https://api2.chainge.finance/v1/getBridgeQuote?symbol=USDT&amount=10000000&fromChain=ARB&toChain=BNB&channelFeeRate=10
+
+
+6. https://api2.chainge.finance/v1/getAggregateQuote
+get quote by given params
+in: 
+fromChain
+fromTokenAddress
+fromDecimal
+fromAmount
+toChain
+toTokenAddress
+toDecimal
+extra
+channelFeeRate //denominator is 10,000
+
+out:
+chain //chain id on which the swap will take place
+chainDecimal //decimals of chain basecoin
+aggregator //on which dex the swap will take place; could be 1inch,Kyber,OpenOcean or ChaingeDex
+outAmount //expected output amount
+outAmountUsd //expected output amount in USD value
+gasFee//gas fee charged in toToken
+serviceFeeRate //service fee rate charged in toToken, denominator is 10,000
+serviceFee //service fee charged in toToken
+slippage //slippage for this pair, denominator is 100
+priceImpact
+routeSummary //used when aggregator=Kyber
+
+example:
+https://api2.chainge.finance/v1/getAggregateQuote?fromChain=BNB&fromTokenAddress=0x55d398326f99059ff775485246999027b3197955&fromDecimal=18&fromAmount=1000000000000000000&toChain=FSN&toTokenAddress=0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee&toDecimal=18&channelFeeRate=10
+
+
+7. https://api2.chainge.finance/v1/getAggregateSwap
+in: 
+Chain
+Aggregator
+FromTokenAddress
+FromDecimal
+FromAmount
+ToTokenAddress
+ToDecimal
+Sender
+Recipient
+Slippage
+AllowPartialFill
+RouteSummary //needed when Aggregator=Kyber
+
+out:
+AmountOut
+From
+To
+Gas
+Value
+Data
+
+example:
+https://api2.chainge.finance/v1/getAggregateSwap?chain=FSN&aggregator=chaingedex&fromTokenAddress=0x4f318ba2b9d317edd7786271d6c161498102c39e&fromDecimal=8&fromAmount=100000000&toTokenAddress=0x8a20c13b42d7fe418f10f922f2cee06246c24269&toDecimal=6&sender=0xBda05e4421bF7e682635B7B18978f2dad4eCC059&recipient=0xBda05e4421bF7e682635B7B18978f2dad4eCC059&slippage=1
+
+8. https://api2.chainge.finance/v1/getTokenInfo
+in: 
+Chain  string
+TokenAddress string
+
+out:
+Chain string
+TokenAddress string
+Name string
+Symbol string
+Decimals string 
+Cmcid string
+CmcRank string
+High string
+Low string
+PriceChange24h string
+Volume24h string
+MarketCap string
+FullyDilutedMarketCap string
+CirculatingSupply string
+TotalSupply string
+MaxSupply string
+IconURI string
+Website []string
+Twitter []string
+Telegram []string
+Docs []string
+
+9. https://api2.chainge.finance/v1/getUserTokens
+in: 
+Chain       string
+Address     string
+
+out:
+TokenList    []UserTokensItem
+TokenAddress string 
+ChangeVal24H string
+
+UserTokensItem struct {
+		Name         string
+		Symbol       string
+		Decimals     string
+		TokenAddress string
+		Amount       string
+		Price        string
+		Value        string
+		LogoUrl      string
+	}
+
+
+There're 2 ways of swap: crosschain mode and direct mode
+In crosschain mode, users have to call MinterProxyV2 contract and send assets and order details in one function call. In this mode, MinterProxyV2 can be regarded as a proxy which receives users' assest and achieve users' requirement by parsing the order details.
+In direct mode, users use SwapProxy to call an external dex or aggregator, and users have to get params for the call by v1/getAggregateSwap in advance.
+When fromChain==toChain==chain returned in getAggregateQuote, use direct mode, otherwise use crosschain mode.
+Here gives 3 examples to show necessary steps for each mode.
+1. example for crosschain mode(bridge):  1000 bnb_USDT -> arb_USDT
+Step 1: getBridgeQuote
+https://api2.chainge.finance/v1/getBridgeQuote?symbol=USDT&amount=1000000000&fromChain=ARB&toChain=BNB
+
+output:
+price: "1",
+outAmount: "1000000000000000000000",
+outAmountUsd: "1000.000000000000000000",
+serviceFee: "600000000000000000",
+gasFee: "300000000000000000"
+
+Step 2: create order
+DbSourceCert struct {
+    FromAmount string //amount of from token, with decimals
+    FromIndex string //index of from token, get from v1/getAssets
+    FromChain string //from chain
+    FromAddr string //user's address
+    CertHash string  //set empty
+    FromPublicKey string //set empty
+    Signature string  //set to "123456"
+}
+DbCommonOrder struct {
+	SourceCerts string //hex of DbSourceCert
+	OrderType int //1 means cross chain; 2 means swap
+	ToIndex int //index of output token
+	Slippage int  /if OrderType=1 set to 0; if OrderType=2, denominator is 10,000
+	TriggerPrice float //if OrderType=1 or if OrderType=2, set to 0
+	Timeout int //if OrderType=1 or if OrderType=2, set to 0
+	ToChain string //output chain
+	ToAddr string //address that receive the output token
+	ExecStrategy string //set to empty
+	Extra string //
+		//The "extra" field is used to define interface rules, with the format "{type}_{value}". Multiple rules are connected using ";". example: "1_10000;2_30"
+		//Rule 1: Expect received quantity for the user
+		//Example: 1_1000000
+		//1000000: Expect received quantity for the user
+		//Rule 2: Third-party user profit sharing identifier
+		//Example: 2_50
+		//50: Third-party profit sharing ratio, in basis points, ranging from 0 to 50
+		//Rule 3: Version of this order
+		//Example: 3_2
+		//1: version 1
+		//2: version 2
+		//Rule 4: Minimum received amount for the user
+		//Example: 4_1000000
+		//Rule 5: Router Chain
+		//Example: 5_ETH
+}
+
+{"sourceCerts":"7b2266726f6d416d6f756e74223a2231303030303030303030303030303030303030303030222c2266726f6d496e646578223a2235222c2266726f6d436861696e223a22424e42222c2266726f6d41646472223a22307864386162393645366432413864313332326246423530396438393736444442434634383130383164222c226365727448617368223a22222c2266726f6d5075626c69634b6579223a22222c227369676e6174757265223a22313233343536227d","orderType":"1","toIndex":"5","toChain":"ARB","toAddr":"0xd8ab96E6d2A8d1322bFB509d8976DDBCF481081d","slippage":"0","execStrategy":"","extra":"1_998900000;3_2;4_998900000;5_ARB","triggerPrice":"0","timeout":"0","channel":"chainge"}
+
+Step 3: Approve to MinterProxyV2
+Call approve of fromToken, owner is user's address, spender is MinterProxyV2 address. It's highly recommended that users check allowance before that to avoid duplicated approve.
+
+Step 4: Call MinterProxyV2
+  function vaultOut(
+address tokenAddr,  //fromTokenAddress
+uint256 amount, //amount
+bool burnable, //burnable tokens means chainge pegged token
+bytes calldata order  //order created in step2, hex encoded
+)
+Step 5: get order id
+By parsing log of tx created in Step 4, users can get order id in LogVaultOut event.
+
+Step 6: get order status by id.
+https://api2.chainge.finance/v1/checkOrder?id=[id]
+
+2. example for crosschain mode(swap):  1000 arb_USDT -> bnb_BNB
+Step 1: getAggregateQuote
+https://api2.chainge.finance/v1/getAggregateQuote?fromChain=ARB&fromTokenAddress=0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9&fromDecimal=6&fromAmount=1000000000&toChain=BNB&toTokenAddress=0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee&toDecimal=18
+
+output:
+chain: "56",
+chainDecimal: 18,
+aggregator: "1inch",
+outAmount: "1681328812420731690",
+outAmountUsd: "994.386926",
+minOutAmount: "",
+serviceFee: "6725315249682926",
+gasFee: "1682360000000000",
+priceImpact: "-0.02"
+
+Step 2: create order
+{"sourceCerts":"7b2266726f6d416d6f756e74223a2231303030303030303030222c2266726f6d496e646578223a2235222c2266726f6d436861696e223a22415242222c2266726f6d41646472223a22307864386162393645366432413864313332326246423530396438393736444442434634383130383164222c226365727448617368223a22222c2266726f6d5075626c69634b6579223a22222c227369676e6174757265223a22313233343536227d","orderType":"2","toIndex":"8","toChain":"BNB","toAddr":"0xd8ab96E6d2A8d1322bFB509d8976DDBCF481081d","slippage":"50","execStrategy":"","extra":"1_1676381318395365676;3_2;4_1667999411803389000;5_BNB","triggerPrice":"0","timeout":"0","channel":"chainge"}
+
+Step 3: Approve to MinterProxyV2
+Call approve of fromToken, owner is user's address, spender is MinterProxyV2 address. It's highly recommended that users check allowance before that to avoid duplicated approve.
+
+Step 4: Call MinterProxyV2
+  function vaultOut(
+address tokenAddr,  //fromTokenAddress
+uint256 amount, //amount
+bool burnable, //burnable tokens means chainge pegged token
+bytes calldata order  //order created in step2, hex encoded
+)
+
+Step 5: get order id
+By parsing log of tx created in Step 4, users can get order id in LogVaultOut event.
+
+Step 6: get order status by id.
+https://api2.chainge.finance/v1/checkOrder?id=[id]
+
+3. example for direct mode:  1 bnb_BNB -> bnb_USDT
+Step 1: getAggregateQuote
+https://api2.chainge.finance/v1/getAggregateQuote?fromChain=BNB&fromTokenAddress=0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee&fromDecimal=18&fromAmount=1000000000000000000&toChain=BNB&toTokenAddress=0x55d398326f99059ff775485246999027b3197955&toDecimal=18
+
+output:
+chain: "56",
+chainDecimal: 18,
+aggregator: "1inch",
+outAmount: "582683617777219776063",
+outAmountUsd: "582.6836178",
+minOutAmount: "",
+serviceFee: "0",
+gasFee: "0",
+priceImpact: "-0.02"
+
+fromChain==toChain=chain=BNB, so we use direct mode
+
+Step 2: getAggregateSwap
+https://api2.chainge.finance/v1/getAggregateSwap?chain=BNB&aggregator=1inch&fromTokenAddress=0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee&fromDecimal=18&fromAmount=1000000000000000000&toTokenAddress=0x55d398326f99059ff775485246999027b3197955&toDecimal=18&sender=0xd8ab96E6d2A8d1322bFB509d8976DDBCF481081d&recipient=0xd8ab96E6d2A8d1322bFB509d8976DDBCF481081d&slippage=10
+
+output:
+amountOut: "580246917812272596205",
+from: "0xd8ab96e6d2a8d1322bfb509d8976ddbcf481081d",
+to: "0x1111111254eeb25477b68fb85ed929f73a960582",
+gas: "0",
+value: "1000000000000000000",
+data: "0x12aa3caf000000000000000000000000e37e799d5077682fa0a244d46e5649f71457bd09000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee00000000000000000000000055d398326f99059ff775485246999027b3197955000000000000000000000000e37e799d5077682fa0a244d46e5649f71457bd09000000000000000000000000d8ab96e6d2a8d1322bfb509d8976ddbcf481081d0000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000001f6c7db5f90d924718000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b500000000000000000000000000000000000000000000009700006900001a4041bb4cdb9cbd36b01bd1cbaebf2de08d9173bc095cd0e30db002a000000000000000000000000000000000000000000000001f2404a67ee1a11aa2ee63c1e50047a90a2d92a8367a91efa1906bfc8c1e05bf10c4bb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c80a06c4eca2755d398326f99059ff775485246999027b31979551111111254eeb25477b68fb85ed929f73a9605820000000000000000000000da12907d"
+
+
+Step 3: create order
+{"sourceCerts":"7b2266726f6d416d6f756e74223a2231303030303030303030303030303030303030222c2266726f6d496e646578223a2238222c2266726f6d436861696e223a22424e42222c2266726f6d41646472223a22307864386162393645366432413864313332326246423530396438393736444442434634383130383164222c226365727448617368223a22222c2266726f6d5075626c69634b6579223a22222c227369676e6174757265223a22313233343536227d","orderType":"2","toIndex":"5","toChain":"BNB","toAddr":"0xd8ab96E6d2A8d1322bFB509d8976DDBCF481081d","slippage":"50","execStrategy":"","extra":"1_584582953605706814540;3_2;4_581660038837678300000;5_BNB","triggerPrice":"0","timeout":"0","channel":"chainge"}
+
+
+
+Step 4: Approve to SwapProxy
+Call approve of fromToken, owner is user's address, spender is SwapProxy address. It's highly recommended that users check allowance before that to avoid duplicated approve. 
+l
+Step5: Call SwapProxy
+  function swap(
+        address tokenAddr,  //fromTokenAddress
+        uint256 amount, //amount
+        address target, //"to" field in output of getAggregateSwap
+        address receiveToken, //receiveTokenAddress
+        address receiver, //address that will receive the output token
+        uint256 minAmount, //minimum amount of output token
+        bytes calldata callData, //"data" field in output of getAggregateSwap
+        bytes calldata order //order created in Step 3, hex encoded
+    ) 
+
+Step 6: Check tx by hash generated in Step4

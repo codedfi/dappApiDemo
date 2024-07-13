@@ -1,112 +1,25 @@
 import BigNumber from 'bignumber.js';
 import { MaxUint256, ethers, formatUnits, hexlify, parseUnits, toUtf8Bytes } from 'ethers'
-const abi = [
-    {
-        inputs: [
-          { internalType: "address", name: "owner", type: "address" },
-          { internalType: "address", name: "spender", type: "address" },
-        ],
-        name: "allowance",
-        outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-        stateMutability: "view",
-        type: "function",
-    },
-    {
-        inputs: [
-          { internalType: "address", name: "spender", type: "address" },
-          { internalType: "uint256", name: "amount", type: "uint256" },
-        ],
-        name: "approve",
-        outputs: [{ internalType: "bool", name: "", type: "bool" }],
-        stateMutability: "nonpayable",
-        type: "function",
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "tokenAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bool",
-                "name": "burnable",
-                "type": "bool"
-            },
-            {
-                "internalType": "bytes",
-                "name": "order",
-                "type": "bytes"
-            }
-        ],
-        "name": "vaultOut",
-        "outputs": [
+import { getAggregateQuote, getAggregateSwap, getAssets, getBridgeQuote } from './api';
+import abi from './abi'
 
-        ],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "tokenAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "address",
-                "name": "target",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "receiveToken",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "receiver",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "minAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bytes",
-                "name": "callData",
-                "type": "bytes"
-            },
-            {
-                "internalType": "bytes",
-                "name": "order",
-                "type": "bytes"
-            }
-        ],
-        "name": "swap",
-        "outputs": [
-
-        ],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-]
 //The following example demonstrates how to use the ethers library to sign a transaction. This code can only run in a browser. Please adapt it to your specific situation:
 const userAddress = '0x42a6685ef29886Cbcb595Aa903f00dea0d1787d8'
 
 // Third-party transaction fee.
-const thirdAmountForExtra = '2_30'; // The third-party fee ranges from 0.1% to 0.5%, expressed in basis points.
+// The third-party fee ranges from 0.1% to 0.5%, expressed in basis points.
+const channelFeeRate = '30'
+
+let supportChainList = []
+let supportTokenList = []
+const initData = async() => {
+    const chains = await getChain()
+    const tokens = await getAssets()
+
+    supportChainList = chains
+    supportTokenList = tokens
+}
+initData()
 
 const getProvider = () => {
     const provider = new ethers.BrowserProvider(window.ethereum)
@@ -142,96 +55,13 @@ const tokenApprove = async (tokenInfo, v2ContractAddress) => {
     }
 }
 
-let supportChainList = []
-const getChain = async () => {
-    try {
-        const response = await fetch('https://api2.chainge.finance/v1/getChain', {
-            method: 'GET',
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-        const result = await response.json()
-        if(result.code === 0) {
-            supportChainList = result.data.list
-        }
-        
-        // chain Data structure
-        // [
-        //     ...,
-        //     {
-        //         "chainIndex": 1,  
-        //         "fullName": "Fusion",
-        //         "nickName": "FSN",
-        //         "baseCoin": "FSN",
-        //         "decimals": 18,
-        //         "poll": 10,
-        //         "confirmations": 3,
-        //         "family": 1,
-        //         "sigMethod": 0,
-        //         "network": "32659",
-        //         "bip44Path": "m/44'/60'/0'/0/0",
-        //         "publicEndpoint": "",
-        //         "privateEndpoint": "",
-        //         "scanUrl": "https://fsnscan.io",
-        //         "needNonce": true,
-        //         "disabled": false,  // When it's true, the chain should be disabled and unavailable for use.
-        //         "delisted": false,  // When it's true, the chain should be disabled and unavailable for use.
-        //         "builtInMinterProxy": "0x1e0cc9b982c7c3fb1ec704c28f48c35e7bed08a1",
-        //         "builtInMinterProxyV2": "0x3668c219b1fa8fe8175158f6ce91ded36fde9152", // 2.0 Contract Address
-        //         "builtInSwapProxy": "0xaf5a8cbcce58267d05577a560d04b51d46dcc124", // 2.0 swap Contract Address
-        //         "weth": "0x8fdc02dc969a22c02ddffd3d8b547fab3d7702fe",
-        //         "swapGasMin": "1",
-        //         "swapGasMax": "10"
-        //     },
-        //     ...
-        // ]
-    } catch(error) {
-
-    }
-}
-getChain()
-
-// quote by bridge
-const getBridgeQuote = async (params) => {
-    try {
-        const paramsStr = new URLSearchParams(params)
-        const response = await fetch('https://api2.chainge.finance/v1/getBridgeQuote?' + paramsStr, {
-            method: 'GET',
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-        const result = await response.json()
-        return result
-    } catch(error) {
-        console.log('getBridgeQuote:error:', error)
-    }
-}
-
-// quote by aggregate
-const getAggregateQuote = async (params) => {
-    try {
-        const paramsStr = new URLSearchParams(params)
-        const response = await fetch('https://api2.chainge.finance/v1/getAggregateQuote?' + paramsStr, {
-            method: 'GET',
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-        const result = await response.json()
-        return result
-    } catch(error) {
-        console.log('getBridgeQuote:error:', error)
-    }
-}
-
+// Example 1: bridget
 // ETH/ETH => BNB/ETH bridge
 const fnTestBridget = async () => {
-    // This information can be obtained through the getChain and getChains APIs.
+    // This information can be obtained through the getChain APIs,(builtInMinterProxyV2)
     const v2ContractForETH = '0x4c5f53015f3adb1b1d15ddf4e17edaae6fa185a5'
 
-    // This information can be obtained through the getChain and getAssets APIs.
+    // This information can be obtained through the getAssets APIs.
     const ETHTokenForEth = {
         index: '4',
         symbol: 'ETH',
@@ -254,18 +84,24 @@ const fnTestBridget = async () => {
         symbol: 'ETH',
         fromChain: 'ETH',
         toChain: 'BNB',
-        channelFeeRate: `30`, // thirdAmountForExtra
+        channelFeeRate: channelFeeRate, // The third-party fee
     }
     // quote 
     const quoteResult = await getBridgeQuote(params)
     if(quoteResult.code !== 0) return
     const { outAmount, serviceFee, gasFee } = quoteResult.data
-
-    // Calculate the value the user should receive.
-    const receiveAmountForExtra = (BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee)).toString()
+    
+    const receiveAmount = BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee)
+    if(receiveAmount <= BigInt(0)) {
+        // The current quote amount cannot cover the fees. Please enter a larger amount.
+        return
+    }
+    const receiveAmountStr = receiveAmount.toString()
 
     // 1_Expected value;2_Third party profit ratio;3_version;4_Mini Amount;5_Execution chain
-    const extra = `1_${receiveAmountForExtra};${thirdAmountForExtra};3_2;4_${receiveAmountForExtra};5_BNB`
+    // In the current example, ETH is being bridged from the ETH chain to the BNB chain, so the value of 5 should be 5_BNB.
+    const extra = `1_${receiveAmountStr};2_${channelFeeRate};3_2;4_${receiveAmountStr};5_BNB`
+
     // submit order 
     const sourceCerts = {
         fromAmount: amount,
@@ -282,7 +118,7 @@ const fnTestBridget = async () => {
     sourceCertsForHex = sourceCertsForHex.substring(2)
 
     const bodyParams = {
-        channel: "chainge", // Your unique identity
+        channel: "chainge", // Your unique identity, Apply to us for your exclusive channel
         extra: extra,
         orderType: '1', // 1, bridage
         slippage: '0', 
@@ -290,12 +126,13 @@ const fnTestBridget = async () => {
         toChain: 'BNB',
         toIndex: ETHTokenForBnb.index,
         toAddr: userAddress,
-        execStrategy: "",
-        timeout: "0",
-        triggerPrice: "0",
+        execStrategy: "", // default ''
+        timeout: "0",   // default '0'
+        triggerPrice: "0", // default '0'
     }
     const orderParamsHex = hexlify(toUtf8Bytes(JSON.stringify(bodyParams)))
     let value = '0'
+    // Check if it is the native currency.
     if(ETHTokenForEth.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
         value = amount
     }
@@ -308,14 +145,13 @@ const fnTestBridget = async () => {
     const result = await writeContract.vaultOut(ETHTokenForEth.address, amount, ETHTokenForEth.burnable, orderParamsHex, options)
 }
 
+// Example 2: Aggregate
 // ETH/ETH => BNB/BNB or ETH/ETH => USDT/ETH,  All non-cross-chain transactions can be routed to the mode
 const fnTestAggregate = async () => {
-    // This information can be obtained through the getChain and getChains APIs.
+    // This information can be obtained through the getChain APIs,(builtInMinterProxyV2)
     const v2ContractForETH = '0x4c5f53015f3adb1b1d15ddf4e17edaae6fa185a5'
-    // Slippage, in basis points format（range: 0.01% ~ 50%）. For example, 1% in basis points format is represented as 100.
-    let slippage = '100'; // 1%
 
-    // This information can be obtained through the getChain and getAssets APIs.
+    // This information can be obtained through the getAssets APIs.
     const ETHTokenForEth = {
         index: '4',
         symbol: 'ETH',
@@ -346,20 +182,26 @@ const fnTestAggregate = async () => {
     // quote 
     const quoteResult = await getAggregateQuote(params)
     if(quoteResult.code !== 0) return
-    const { chain, chainDecimal, outAmount, serviceFee, gasFee } = quoteResult.data
-    // chain obj
+    const { chain, chainDecimal, outAmount, serviceFee, gasFee, slippage } = quoteResult.data
+
+    const receiveAmount = BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee)
+    if(receiveAmount <= BigInt(0)) {
+        // The current quote amount cannot cover the fees. Please enter a larger amount.
+        return
+    }
+    // execution Chain Info
     const executionChainObj = supportChainList.find((item) => item.network === chain)
 
-    // Calculate the value the user should receive.
-    const toAmount = formatUnits(BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee), chainDecimal)
-    const receiveAmountForExtra = formatUnits(parseUnits(toAmount), BNBTokenForBnb.decimals).toString()
+    // Calculate the value the user should receive. 
+    const receiveAmountHr = formatUnits(receiveAmount, chainDecimal)
+    const receiveAmountForExtra = parseUnits(receiveAmountHr, BNBTokenForBnb.decimals).toString()
 
     // Computed minimum, After calculating the minimum value, we need to convert it to the decimals of the target chain.
-    const miniAmount = BigNumber(toAmount).multipliedBy(BigNumber((1 - 100/10000))).toString()
+    const miniAmount = BigNumber(receiveAmountHr).multipliedBy(BigNumber((1 - (slippage * 0.01)))).toString()
     const miniAmountForExtra = parseUnits(miniAmount, BNBTokenForBnb.decimals).toString()
 
     // 1_Expected value;2_Third party profit ratio;3_version;4_Mini Amount;5_Execution chain
-    const extra = `1_${receiveAmountForExtra};${thirdAmountForExtra};3_2;4_${miniAmountForExtra};5_${executionChainObj.nickName}`
+    const extra = `1_${receiveAmountForExtra};2_${channelFeeRate};3_2;4_${miniAmountForExtra};5_${executionChainObj.nickName}`
 
 
     // submit order 
@@ -392,6 +234,7 @@ const fnTestAggregate = async () => {
     }
     const orderParamsHex = hexlify(toUtf8Bytes(JSON.stringify(bodyParams)))
     let value = '0'
+    // Check if it is the native currency.
     if(ETHTokenForEth.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
         value = amount
     }
@@ -403,16 +246,10 @@ const fnTestAggregate = async () => {
     const result = await writeContract.vaultOut(ETHTokenForEth.address, amount, ETHTokenForEth.burnable, orderParamsHex, options)
 }
 
+// Example 3: direct swap
 // BNB/USDT => BNB/USDC  In the case of the same chain, please use this mode.
 const fnTestSwap = async () => {
-    // This information can be obtained through the getChain and getChains APIs.
-    const v2ContractForBNB = '0x99a57ac044e6ce44b7e161a07af0d3e693a75b54'
-    const v2SwapContractForBNB = '0xbffca20712e0906d1ef74f3e0a7cbe050aa6228a'
-
-    // Slippage, in basis points format（range: 0.01% ~ 50%）. For example, 1% in basis points format is represented as 100.
-    let slippage = '100'; // 1%
-
-    // This information can be obtained through the getChain and getAssets APIs.
+    // This information can be obtained through the getAssets APIs.
     const USDTTokenForBnb = {
         index: '5',
         symbol: 'USDT',
@@ -441,26 +278,38 @@ const fnTestSwap = async () => {
         toChain: 'BNB',
         channelFeeRate: '30',
     }
+    
     // quote 
     const quoteResult = await getAggregateQuote(params)
     if(quoteResult.code !== 0) return
-    const { chain, chainDecimal, outAmount, serviceFee, gasFee, routeSummary = '', aggregator } = quoteResult.data
-    // chain obj
-    const  executionChainObj = supportChainList.find((item) => item.network === chain)
+    const { chain, chainDecimal, outAmount, serviceFee, gasFee, slippage } = quoteResult.data
 
-    // Calculate the value the user should receive.
-    const toAmount = formatUnits(BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee), chainDecimal)
-    const receiveAmountForExtra = formatUnits(parseUnits(toAmount), USDCTokenForBnb.decimals).toString()
+    const receiveAmount = BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee)
+    if(receiveAmount <= BigInt(0)) {
+        // The current quote amount cannot cover the fees. Please enter a larger amount.
+        return
+    }
+    // execution Chain Info
+    const executionChainObj = supportChainList.find((item) => item.network === chain)
 
-    // Computed minimum
-    const miniAmount = BigNumber(toAmount).multipliedBy(BigNumber((1 - 100/10000))).toString()
-    const miniAmountForExtra = parseUnits(miniAmount, USDCTokenForBnb.decimals).toString()
+    // Calculate the value the user should receive. 
+    const receiveAmountHr = formatUnits(receiveAmount, chainDecimal)
+    const receiveAmountForExtra = parseUnits(receiveAmountHr, BNBTokenForBnb.decimals).toString()
+
+    // Computed minimum, After calculating the minimum value, we need to convert it to the decimals of the target chain.
+    const miniAmount = BigNumber(receiveAmountHr).multipliedBy(BigNumber((1 - (slippage * 0.01)))).toString()
+    const miniAmountForExtra = parseUnits(miniAmount, BNBTokenForBnb.decimals).toString()
 
     // 1_Expected value;2_Third party profit ratio;3_version;4_Mini Amount;5_Execution chain
-    const extra = `1_${receiveAmountForExtra};${thirdAmountForExtra};3_2;4_${miniAmountForExtra};5_${executionChainObj.nickName}`
-
+    const extra = `1_${receiveAmountForExtra};2_${channelFeeRate};3_2;4_${miniAmountForExtra};5_${executionChainObj.nickName}`
+  
     // If the execution chain is not the chain you selected.
     if(executionChainObj.nickName !== 'BNB') {
+        // likely method fnTestAggregate
+
+        // This information can be obtained through the getChain APIs,(builtInMinterProxyV2)
+        const v2ContractForBNB = '0x99a57ac044e6ce44b7e161a07af0d3e693a75b54'
+
         // submit order 
         const sourceCerts = {
             fromAmount: amount,
@@ -501,6 +350,8 @@ const fnTestSwap = async () => {
         const options = {value: value}
         const result = await writeContract.vaultOut(USDTTokenForBnb.address, amount, USDTTokenForBnb.burnable, orderParamsHex, options)
     } else {
+        // This information can be obtained through the getChain APIs(builtInSwapProxy)
+        const v2SwapContractForBNB = '0xbffca20712e0906d1ef74f3e0a7cbe050aa6228a'
         const params = {
             chain: 'BNB',
             aggregator,
@@ -515,14 +366,7 @@ const fnTestSwap = async () => {
             allowPartialFill: true,
             routeSummary
         }
-        const paramsStr = new URLSearchParams(params)
-        const response = await fetch('https://api2.chainge.finance/v1/getAggregateSwap?' + paramsStr, {
-            method: 'GET',
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-        const swapResult = await response.json()
+        const swapResult = await getAggregateSwap(params)
         if(swapResult.code !== 0) return
         const {data, to} = swapResult.data
 
@@ -568,5 +412,3 @@ const fnTestSwap = async () => {
     }
     
 }
-
-fnTestBridget()
