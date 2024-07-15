@@ -93,7 +93,6 @@ export const getAssets = async () => {
         if(result.code === 0) {
             const allToken = result.data.list
             const tempList = allToken.filter(item => item.visible && !item.delisted)
-            console.log(tempList)
             return tempList
         }
     } catch(error) {
@@ -221,6 +220,26 @@ export const getAggregateSwap = async (params) => {
     try {
         const paramsStr = new URLSearchParams(params)
         const response = await fetch('https://api2.chainge.finance/v1/getAggregateSwap?' + paramsStr, {
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+        const result = await response.json()
+        return result
+    } catch(error) {
+        console.log(error)
+    }
+}
+
+
+/**
+ * https://api2.chainge.finance/v1/getOrderIdByHash?chain=KOIN&hash=0x12203a0b28cdb2e51c95aed7e2f623c72d44b05a3d3733422d286e36690ed4bc4467
+ */
+export const getOrderIdByHash = async (params) => {
+    try {
+        const paramsStr = new URLSearchParams(params)
+        const response = await fetch('https://api2.chainge.finance/v1/getOrderIdByHash?' + paramsStr, {
             method: 'GET',
             headers: {
                 "Content-Type": "application/json",

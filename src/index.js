@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js';
 import { MaxUint256, ethers, formatUnits, hexlify, parseUnits, toUtf8Bytes } from 'ethers'
-import { getAggregateQuote, getAggregateSwap, getAssets, getBridgeQuote } from './api';
-import abi from './abi'
+import { getAggregateQuote, getAggregateSwap, getAssets, getBridgeQuote, getChain } from './api.js';
+import abi from './abi.js'
 
 //The following example demonstrates how to use the ethers library to sign a transaction. This code can only run in a browser. Please adapt it to your specific situation:
 const userAddress = '0x42a6685ef29886Cbcb595Aa903f00dea0d1787d8'
@@ -177,7 +177,7 @@ const fnTestAggregate = async () => {
         toTokenAddress: BNBTokenForBnb.address,
         toDecimal: BNBTokenForBnb.decimals,
         toChain: 'BNB',
-        channelFeeRate: '30',
+        channelFeeRate: channelFeeRate,
     }
     // quote 
     const quoteResult = await getAggregateQuote(params)
@@ -276,7 +276,7 @@ const fnTestSwap = async () => {
         toTokenAddress: USDCTokenForBnb.address,
         toDecimal: USDCTokenForBnb.decimals,
         toChain: 'BNB',
-        channelFeeRate: '30',
+        channelFeeRate: channelFeeRate,
     }
     
     // quote 

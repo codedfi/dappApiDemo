@@ -6,6 +6,8 @@
   "type": "module",
   "dependencies": {
     "bignumber.js": "^9.1.2",
-    "ethers": "^6.11.1"
+    "ethers": "^6.11.1",
+    "koilib": "^8.0.0",
+    "kondor-js": "^1.1.0"
   }
 }
