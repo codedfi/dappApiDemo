@@ -49,40 +49,18 @@ const fnTestBridget = async () => {
     // In the current example, KOIN is being bridged from the KOIN chain to the FSN chain, so the value of 5 should be 5_FSN.
     const extra = `1_${receiveAmountStr};2_${channelFeeRate};3_2;4_${receiveAmountStr};5_FSN`
 
-    // submit order 
-    const sourceCerts = {
-        fromAmount: amount,
-        fromIndex: KOINTokenForKOIN.index, // KOIN
-        fromChain: 'KOIN',
-        fromAddr: koinAddress,
-        certHash: '',
-        fromPublicKey: '', // default
-        signature: '123456' // default '123456'
-    }
-
-    const sourceCertsStr= JSON.stringify(sourceCerts)
-    let sourceCertsForHex = hexlify(toUtf8Bytes(sourceCertsStr))
-    sourceCertsForHex = sourceCertsForHex.substring(2)
-
     let tokenContractAddress = KOINTokenForKOIN.address
     if (tokenContractAddress === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
         tokenContractAddress = '15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL'
     }
+    
+    const channel = 'chainge'
+    const toChain = 'FSN' // here is FSN
+    const toTokenAddress = KOINTokenForFSN.address
+    const toAddr = toAddress
+    const slippage = '0'
 
-    const bodyParams = {
-        channel: "chainge", // Your unique identity, Apply to us for your exclusive channel
-        extra: extra,
-        orderType: '1', // 1, bridage
-        slippage: '0', 
-        sourceCerts: sourceCertsForHex, 
-        toChain: 'FSN',
-        toIndex: KOINTokenForFSN.index,
-        toAddr: toAddress,
-        execStrategy: "", // default ''
-        timeout: "0",   // default '0'
-        triggerPrice: "0", // default '0'
-    }
-    const shortOrderStr = `${bodyParams.channel}:${bodyParams.toChain}:${bodyParams.toIndex}:${bodyParams.toAddr}:${bodyParams.slippage}:${bodyParams.extra}`
+    const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippage}:${extra}`
     const orderHex = shortOrderStr
 
     const provider = kondor.getProvider()
@@ -163,40 +141,17 @@ const fnTestAggregate = async () => {
     const extra = `1_${receiveAmountForExtra};2_${channelFeeRate};3_2;4_${miniAmountForExtra};5_${executionChainObj.nickName}`
 
 
-    // submit order 
-    const sourceCerts = {
-        fromAmount: amount,
-        fromIndex: KOINTokenForKOIN.index, // eth
-        fromChain: 'KOIN',
-        fromAddr: koinAddress,
-        certHash: '',
-        fromPublicKey: '', // default
-        signature: '123456' // default '123456'
-    }
-
-    const sourceCertsStr= JSON.stringify(sourceCerts)
-    let sourceCertsForHex = hexlify(toUtf8Bytes(sourceCertsStr))
-    sourceCertsForHex = sourceCertsForHex.substring(2)
-
     let tokenContractAddress = KOINTokenForKOIN.address
     if (tokenContractAddress === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
         tokenContractAddress = '15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL'
     }
 
-    const bodyParams = {
-        channel: "chainge", // Your unique identity
-        extra: extra,
-        orderType: '2', // 2, aggregate
-        slippage: slippage, 
-        sourceCerts: sourceCertsForHex, 
-        toChain: 'BNB',
-        toIndex: BNBTokenForBnb.index,
-        toAddr: toAddress,
-        execStrategy: "",
-        timeout: "0",
-        triggerPrice: "0",
-    }
-    const shortOrderStr = `${bodyParams.channel}:${bodyParams.toChain}:${bodyParams.toIndex}:${bodyParams.toAddr}:${bodyParams.slippage}:${bodyParams.extra}`
+    const channel = 'chainge'
+    const toChain = 'BNB' // here is BNB
+    const toTokenAddress = BNBTokenForBnb.address
+    const toAddr = toAddress
+
+    const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippage}:${extra}`
     const orderHex = shortOrderStr
 
     const provider = kondor.getProvider()

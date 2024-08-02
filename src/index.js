@@ -102,35 +102,14 @@ const fnTestBridget = async () => {
     // In the current example, ETH is being bridged from the ETH chain to the BNB chain, so the value of 5 should be 5_BNB.
     const extra = `1_${receiveAmountStr};2_${channelFeeRate};3_2;4_${receiveAmountStr};5_BNB`
 
-    // submit order 
-    const sourceCerts = {
-        fromAmount: amount,
-        fromIndex: ETHTokenForEth.index, // eth
-        fromChain: 'ETH',
-        fromAddr: userAddress,
-        certHash: '',
-        fromPublicKey: '', // default
-        signature: '123456' // default '123456'
-    }
+    const channel = 'chainge'
+    const toChain = 'BNB' // here is BNB
+    const toTokenAddress = ETHTokenForBnb.address
+    const toAddr = userAddress
+    const slippage = '0' // here is 0
 
-    const sourceCertsStr= JSON.stringify(sourceCerts)
-    let sourceCertsForHex = hexlify(toUtf8Bytes(sourceCertsStr))
-    sourceCertsForHex = sourceCertsForHex.substring(2)
-
-    const bodyParams = {
-        channel: "chainge", // Your unique identity, Apply to us for your exclusive channel
-        extra: extra,
-        orderType: '1', // 1, bridage
-        slippage: '0', 
-        sourceCerts: sourceCertsForHex, 
-        toChain: 'BNB',
-        toIndex: ETHTokenForBnb.index,
-        toAddr: userAddress,
-        execStrategy: "", // default ''
-        timeout: "0",   // default '0'
-        triggerPrice: "0", // default '0'
-    }
-    const orderParamsHex = hexlify(toUtf8Bytes(JSON.stringify(bodyParams)))
+    const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippage}:${extra}`
+    const orderParamsHex = hexlify(toUtf8Bytes(shortOrderStr))
     let value = '0'
     // Check if it is the native currency.
     if(ETHTokenForEth.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
@@ -204,35 +183,13 @@ const fnTestAggregate = async () => {
     const extra = `1_${receiveAmountForExtra};2_${channelFeeRate};3_2;4_${miniAmountForExtra};5_${executionChainObj.nickName}`
 
 
-    // submit order 
-    const sourceCerts = {
-        fromAmount: amount,
-        fromIndex: ETHTokenForEth.index, // eth
-        fromChain: 'ETH',
-        fromAddr: userAddress,
-        certHash: '',
-        fromPublicKey: '', // default
-        signature: '123456' // default '123456'
-    }
+    const channel = 'chainge'
+    const toChain = 'BNB' // here is BNB
+    const toTokenAddress = BNBTokenForBnb.address
+    const toAddr = userAddress
 
-    const sourceCertsStr= JSON.stringify(sourceCerts)
-    let sourceCertsForHex = hexlify(toUtf8Bytes(sourceCertsStr))
-    sourceCertsForHex = sourceCertsForHex.substring(2)
-
-    const bodyParams = {
-        channel: "chainge", // Your unique identity
-        extra: extra,
-        orderType: '2', // 2, aggregate
-        slippage: slippage, 
-        sourceCerts: sourceCertsForHex, 
-        toChain: 'BNB',
-        toIndex: BNBTokenForBnb.index,
-        toAddr: userAddress,
-        execStrategy: "",
-        timeout: "0",
-        triggerPrice: "0",
-    }
-    const orderParamsHex = hexlify(toUtf8Bytes(JSON.stringify(bodyParams)))
+    const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippage}:${extra}`
+    const orderParamsHex = hexlify(toUtf8Bytes(shortOrderStr))
     let value = '0'
     // Check if it is the native currency.
     if(ETHTokenForEth.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
@@ -310,35 +267,14 @@ const fnTestSwap = async () => {
         // This information can be obtained through the getChain APIs,(builtInMinterProxyV2)
         const v2ContractForBNB = '0x99a57ac044e6ce44b7e161a07af0d3e693a75b54'
 
-        // submit order 
-        const sourceCerts = {
-            fromAmount: amount,
-            fromIndex: USDTTokenForBnb.index, // eth
-            fromChain: 'BNB',
-            fromAddr: userAddress,
-            certHash: '',
-            fromPublicKey: '', // default
-            signature: '123456' // default '123456'
-        }
+        const channel = 'chainge'
+        const toChain = 'BNB' // here is BNB
+        const toTokenAddress = USDCTokenForBnb.address
+        const toAddr = userAddress
+    
+        const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippage}:${extra}`
+        const orderParamsHex = hexlify(toUtf8Bytes(shortOrderStr))
 
-        const sourceCertsStr= JSON.stringify(sourceCerts)
-        let sourceCertsForHex = hexlify(toUtf8Bytes(sourceCertsStr))
-        sourceCertsForHex = sourceCertsForHex.substring(2)
-
-        const bodyParams = {
-            channel: "chainge", // Your unique identity
-            extra: extra,
-            orderType: '2', // 2, aggregate
-            slippage: slippage, 
-            sourceCerts: sourceCertsForHex, 
-            toChain: 'BNB',
-            toIndex: USDCTokenForBnb.index,
-            toAddr: userAddress,
-            execStrategy: "",
-            timeout: "0",
-            triggerPrice: "0",
-        }
-        const orderParamsHex = hexlify(toUtf8Bytes(JSON.stringify(bodyParams)))
         let value = '0'
         if(USDTTokenForBnb.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
             value = amount
@@ -370,35 +306,14 @@ const fnTestSwap = async () => {
         if(swapResult.code !== 0) return
         const {data, to} = swapResult.data
 
-        // submit order 
-        const sourceCerts = {
-            fromAmount: amount,
-            fromIndex: USDTTokenForBnb.index, // eth
-            fromChain: 'BNB',
-            fromAddr: userAddress,
-            certHash: '',
-            fromPublicKey: '', // default
-            signature: '123456' // default '123456'
-        }
-
-        const sourceCertsStr= JSON.stringify(sourceCerts)
-        let sourceCertsForHex = hexlify(toUtf8Bytes(sourceCertsStr))
-        sourceCertsForHex = sourceCertsForHex.substring(2)
-
-        const bodyParams = {
-            channel: "chainge", // Your unique identity
-            extra: extra,
-            orderType: '2', // 2, aggregate
-            slippage: slippage, 
-            sourceCerts: sourceCertsForHex, 
-            toChain: 'BNB',
-            toIndex: USDCTokenForBnb.index,
-            toAddr: userAddress,
-            execStrategy: "",
-            timeout: "0",
-            triggerPrice: "0",
-        }
-        const orderParamsHex = hexlify(toUtf8Bytes(JSON.stringify(bodyParams)))
+        const channel = 'chainge'
+        const toChain = 'BNB' // here is BNB
+        const toTokenAddress = USDCTokenForBnb.address
+        const toAddr = userAddress
+    
+        const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippage}:${extra}`
+        const orderParamsHex = hexlify(toUtf8Bytes(shortOrderStr))
+        
         let value = '0'
         if(USDTTokenForBnb.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
             value = amount
