@@ -6,7 +6,7 @@ const MINTER_KOIN = '16CYYThq1ud7jZUgVk2Vj9xrfWsu7i3Nw9'
 
 const  getTransactionInfoByToken = async (amount, memo, provider, signer) => {
     const koinContract = new Contract({
-        id: '15DJN4a8SgrbGhhGksSBASiSYjGnMU8dGL',
+        id: '18tWNU7E4yuQzz7hMVpceb9ixmaWLVyQsr',
         abi: utils.tokenAbi,
         provider,
         signer,
