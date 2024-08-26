@@ -1,5 +1,5 @@
 import { Contract, utils } from 'koilib';
-const MINTER_KOIN = '1ANdS4xE7bF2YM42LBvx6k6cnRhfeRX1NR'
+const MINTER_KOIN = '15v4ML9VjjuJ2BMMoH1awGAYEnpCeESHaf'
 
 class KoinPlugin {
     constructor() {}

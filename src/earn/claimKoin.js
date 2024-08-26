@@ -2,7 +2,7 @@ import { Contract, utils } from 'koilib';
 import * as kondor from "kondor-js";
 
 const koinAddress = '1PJ358hLg6GqywEW979wYoTapQnRYNwoYh'
-const MINTER_KOIN = '16CYYThq1ud7jZUgVk2Vj9xrfWsu7i3Nw9'
+const MINTER_KOIN = '15Rvm1urRjFSbviHD2fmXRN9BtB8RYiMUf'
 
 const  getTransactionInfoByToken = async (amount, memo, provider, signer) => {
     const koinContract = new Contract({
