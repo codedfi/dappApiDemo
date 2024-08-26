@@ -19,7 +19,6 @@ const initData = async() => {
     supportChainList = chains
     supportTokenList = tokens
 }
-initData()
 
 const getProvider = () => {
     const provider = new ethers.BrowserProvider(window.ethereum)
@@ -58,6 +57,7 @@ const tokenApprove = async (tokenInfo, v2ContractAddress) => {
 // Example 1: bridget
 // ETH/ETH => BNB/ETH bridge
 const fnTestBridget = async () => {
+    await initData()
     // This information can be obtained through the getChain APIs,(builtInMinterProxyV2)
     const v2ContractForETH = '0x4c5f53015f3adb1b1d15ddf4e17edaae6fa185a5'
 
@@ -110,6 +110,7 @@ const fnTestBridget = async () => {
 
     const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippage}:${extra}`
     const orderParamsHex = hexlify(toUtf8Bytes(shortOrderStr))
+
     let value = '0'
     // Check if it is the native currency.
     if(ETHTokenForEth.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
@@ -127,6 +128,7 @@ const fnTestBridget = async () => {
 // Example 2: Aggregate
 // ETH/ETH => BNB/BNB or ETH/ETH => USDT/ETH,  All non-cross-chain transactions can be routed to the mode
 const fnTestAggregate = async () => {
+    await initData()
     // This information can be obtained through the getChain APIs,(builtInMinterProxyV2)
     const v2ContractForETH = '0x4c5f53015f3adb1b1d15ddf4e17edaae6fa185a5'
 
@@ -140,10 +142,10 @@ const fnTestAggregate = async () => {
     }
 
     const BNBTokenForBnb = {
-        index: '124',
+        index: '8',
         symbol: 'BNB',
         decimals: 18,
-        address: '0x4b0f1812e5df2a09796481ff14017e6005508003',
+        address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
         burnable: false
     }
     const fromAmount = '1'
@@ -176,20 +178,23 @@ const fnTestAggregate = async () => {
     const receiveAmountForExtra = parseUnits(receiveAmountHr, BNBTokenForBnb.decimals).toString()
 
     // Computed minimum, After calculating the minimum value, we need to convert it to the decimals of the target chain.
-    const miniAmount = BigNumber(receiveAmountHr).multipliedBy(BigNumber((1 - (slippage * 0.01)))).toString()
+    // slippage is a percentage scale
+    const miniAmount = BigNumber(receiveAmountHr).multipliedBy(BigNumber((1 - (slippage * 0.01)))).toFixed(BNBTokenForBnb.decimals)
     const miniAmountForExtra = parseUnits(miniAmount, BNBTokenForBnb.decimals).toString()
 
     // 1_Expected value;2_Third party profit ratio;3_version;4_Mini Amount;5_Execution chain
     const extra = `1_${receiveAmountForExtra};2_${channelFeeRate};3_2;4_${miniAmountForExtra};5_${executionChainObj.nickName}`
-
 
     const channel = 'chainge'
     const toChain = 'BNB' // here is BNB
     const toTokenAddress = BNBTokenForBnb.address
     const toAddr = userAddress
 
-    const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippage}:${extra}`
+    // But it needs to be converted to a scale of ten thousand points in the resulting parameter
+    const slippageFormat = slippage * 0.01 * 10000
+    const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippageFormat}:${extra}`
     const orderParamsHex = hexlify(toUtf8Bytes(shortOrderStr))
+
     let value = '0'
     // Check if it is the native currency.
     if(ETHTokenForEth.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
@@ -206,6 +211,7 @@ const fnTestAggregate = async () => {
 // Example 3: direct swap
 // BNB/USDT => BNB/USDC  In the case of the same chain, please use this mode.
 const fnTestSwap = async () => {
+    await initData()
     // This information can be obtained through the getAssets APIs.
     const USDTTokenForBnb = {
         index: '5',
@@ -238,8 +244,10 @@ const fnTestSwap = async () => {
     
     // quote 
     const quoteResult = await getAggregateQuote(params)
+
     if(quoteResult.code !== 0) return
-    const { chain, chainDecimal, outAmount, serviceFee, gasFee, slippage } = quoteResult.data
+    const { chain, chainDecimal, outAmount, serviceFee, gasFee, slippage, aggregator, routeSummary } = quoteResult.data
+
 
     const receiveAmount = BigInt(outAmount) - BigInt(serviceFee) - BigInt(gasFee)
     if(receiveAmount <= BigInt(0)) {
@@ -251,15 +259,19 @@ const fnTestSwap = async () => {
 
     // Calculate the value the user should receive. 
     const receiveAmountHr = formatUnits(receiveAmount, chainDecimal)
-    const receiveAmountForExtra = parseUnits(receiveAmountHr, BNBTokenForBnb.decimals).toString()
+    const receiveAmountForExtra = parseUnits(receiveAmountHr, USDCTokenForBnb.decimals).toString()
+
 
     // Computed minimum, After calculating the minimum value, we need to convert it to the decimals of the target chain.
-    const miniAmount = BigNumber(receiveAmountHr).multipliedBy(BigNumber((1 - (slippage * 0.01)))).toString()
-    const miniAmountForExtra = parseUnits(miniAmount, BNBTokenForBnb.decimals).toString()
+    const miniAmount = BigNumber(receiveAmountHr).multipliedBy(BigNumber((1 - (slippage * 0.01)))).toFixed(USDCTokenForBnb.decimals)
+    const miniAmountForExtra = parseUnits(miniAmount, USDCTokenForBnb.decimals).toString()
 
     // 1_Expected value;2_Third party profit ratio;3_version;4_Mini Amount;5_Execution chain
     const extra = `1_${receiveAmountForExtra};2_${channelFeeRate};3_2;4_${miniAmountForExtra};5_${executionChainObj.nickName}`
-  
+
+    // But it needs to be converted to a scale of ten thousand points in the resulting parameter
+    const slippageFormat = slippage * 0.01 * 10000
+
     // If the execution chain is not the chain you selected.
     if(executionChainObj.nickName !== 'BNB') {
         // likely method fnTestAggregate
@@ -298,11 +310,12 @@ const fnTestSwap = async () => {
             toDecimal: USDCTokenForBnb.decimals,
             sender: userAddress,
             recipient: v2SwapContractForBNB,
-            slippage,
+            slippage: slippageFormat,
             allowPartialFill: true,
             routeSummary
         }
         const swapResult = await getAggregateSwap(params)
+
         if(swapResult.code !== 0) return
         const {data, to} = swapResult.data
 
@@ -313,7 +326,6 @@ const fnTestSwap = async () => {
     
         const shortOrderStr = `${channel}:${toChain}:${toTokenAddress}:${toAddr}:${slippage}:${extra}`
         const orderParamsHex = hexlify(toUtf8Bytes(shortOrderStr))
-        
         let value = '0'
         if(USDTTokenForBnb.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
             value = amount
