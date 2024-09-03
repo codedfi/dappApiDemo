@@ -15,7 +15,7 @@ const getSigner = async () => {
     return signer
 }
 
-const claimNow = async (claimableTokenAddress) => {
+const claimNow = async () => {
     try {
         const signer = await getSigner()
         await signer.sendTransaction({
@@ -30,4 +30,4 @@ const claimNow = async (claimableTokenAddress) => {
 }
 
 // example
-// claimNow(btcAddress)
+// claimNow()
