@@ -15,13 +15,29 @@ const getSigner = async () => {
     return signer
 }
 
-const claimNow = async () => {
+// get sys
+const claimNowForSys = async () => {
     try {
         const signer = await getSigner()
         await signer.sendTransaction({
             to: minterAddress,
             from: userAddress,
             data: hexlify(toUtf8Bytes('ETH_1000000:SYS_10000000')),
+            value: BigInt(0)
+        })
+    } catch(error) {
+        console.log(error)
+    }
+}
+
+// get supr
+const claimNowForSupr = async () => {
+    try {
+        const signer = await getSigner()
+        await signer.sendTransaction({
+            to: minterAddress,
+            from: userAddress,
+            data: hexlify(toUtf8Bytes('ETH_1000000:SUPR_10000000')),
             value: BigInt(0)
         })
     } catch(error) {
