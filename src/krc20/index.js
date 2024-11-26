@@ -155,3 +155,13 @@ const fnCore = async () => {
 }
 
 fnCore()
+
+
+// NOTE:
+// We have three minter addresses; make sure to distinguish between them when using them.
+
+// fromToken is KAS use:   kaspa:qpgmt2dn8wcqf0436n0kueap7yx82n7raurlj6aqjc3t3wm9y5ssqtg9e4lsm
+
+// fromToken in CUSDT/CUSDC/CETH/CBTC/CXCHNG use: kaspa:qpy03sxk3z22pacz2vkn2nrqeglvptugyqy54xal2skha6xh0cr7wjueueg79
+
+// other KRC20 TOKEN use: kaspa:qz9cqmddjppjyth8rngevfs767m5nvm0480nlgs5ve8d6aegv4g9xzu2tgg0u
