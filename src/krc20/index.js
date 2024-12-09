@@ -67,14 +67,15 @@ const fnGetAggregateQuote = async () => {
 
     // Calculate the value the user should receive. 
     const receiveAmountHr = formatUnits(receiveAmount, chainDecimal)
-    const receiveAmountForExtra = parseUnits(receiveAmountHr, toTokenForKAS.decimals).toString()
+    const receiveAmountHrRound = BigNumber(receiveAmountHr).toFixed(toTokenForKAS.decimals, BigNumber.ROUND_DOWN)
+    const receiveAmountForExtra = parseUnits(receiveAmountHrRound, toTokenForKAS.decimals).toString()
 
 
     // Computed minimum, After calculating the minimum value, we need to convert it to the decimals of the target chain.
     // The slippage here is in percentage format. 
     // The slippage returned by this interface is our recommended value, but you can set your own slippage.
     const tempSlippage = customSlippage || slippage
-    const miniAmount = BigNumber(receiveAmountHr).multipliedBy(BigNumber((1 - (tempSlippage * 0.01)))).toFixed(toTokenForKAS.decimals)
+    const miniAmount = BigNumber(receiveAmountHr).multipliedBy(BigNumber((1 - (tempSlippage * 0.01)))).toFixed(toTokenForKAS.decimals, BigNumber.ROUND_DOWN)
     const miniAmountForExtra = parseUnits(miniAmount, toTokenForKAS.decimals).toString()
 
     // 1_Expected value;2_Third party profit ratio;3_version;4_Mini Amount;5_Execution chain
